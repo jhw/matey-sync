@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matey-sync"
+version = "0.1.0"
+description = "Mirror Dirtywave M8 instrument patches (and their audio clips) from impbox.net/matey, and copy them to an M8."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+matey-sync = "matey_sync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
