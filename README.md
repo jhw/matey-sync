@@ -19,7 +19,7 @@ audition patches locally.
     matey-sync bass                      # download new patches + clips matching "bass"
     matey-sync strings --only-with-clip  # skip patches with no clip
     matey-sync bass --dry-run            # show what would be fetched, change nothing
-    matey-sync bass --m8                 # ...then copy to /Volumes/M8/Instruments/Packs/matey/bass/
+    matey-sync bass --m8                 # ...then copy to /Volumes/M8/Instruments/Packs/matey/bass/<user>/
     matey-sync                           # no term: every patch on the site (folder "_all")
     matey-sync bass -v                   # also log every HTTP request and pause
     matey-sync bass -q                   # warnings and errors only
@@ -49,7 +49,8 @@ or `$MATEY_SYNC_CACHE`) is laid out as `{search term}/{user}/{patch}`:
 - Authors sometimes appear under two spellings (`ineffable_twaddle` and
   `ineffable-twaddle`); they get separate folders, as the site lists them.
 
-On the M8: `/Volumes/M8/Instruments/Packs/matey/<term>/*.m8i` (alongside your other packs) (clips are not copied;
+On the M8: `/Volumes/M8/Instruments/Packs/matey/<term>/<user>/*.m8i` (alongside your other packs; the
+same layout as the cache) (clips are not copied;
 files already on the card with identical content are skipped). `Instruments/`
 must already exist on the card. Characters FAT can't store (`* ? : " < > |`
 etc.) are replaced with `_` in the filename.

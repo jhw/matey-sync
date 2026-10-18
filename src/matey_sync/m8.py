@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Sequence
 
 from .cache import Cache
-from .models import Patch, safe_term
+from .models import Patch, safe_segment, safe_term
 
 log = logging.getLogger("matey_sync")
 
@@ -44,9 +44,11 @@ def copy_to_m8(term: str, patches: Sequence[Patch], cache: Cache, *,
                instruments_dir: str = DEFAULT_INSTRUMENTS_DIR,
                subdir: str = DEFAULT_SUBDIR,
                dry_run: bool = False) -> M8Report:
-    """Copy cached ``.m8i`` files to ``<m8_root>/Instruments/Packs/matey/<term>/ by default``.
+    """Copy cached ``.m8i`` files to ``<m8_root>/<instruments_dir>/<subdir>/<term>/<user>/``.
 
-    One folder per search term, so patches are easy to browse on the device.
+    By default that is ``/Volumes/M8/Instruments/Packs/matey/<term>/<user>/``,
+    mirroring the local cache, so patches are easy to browse by sound type and
+    author on the device.
     Only the .m8i files go to the M8 (not the MP3 clips). Files already on
     the card with identical content are left alone. The Instruments folder
     must already exist; only the folders below it are created.
@@ -71,14 +73,16 @@ def copy_to_m8(term: str, patches: Sequence[Patch], cache: Cache, *,
             report.not_cached.append(patch.path)
             log.warning("M8: %s not in the local cache, skipped", patch.path)
             continue
-        target = dest / fat_safe(patch.path)
+        author_dir = safe_segment(patch.author, "_unknown")
+        target = dest / author_dir / fat_safe(patch.path)
+        shown = f"{author_dir}/{target.name}"
         if target.is_file() and filecmp.cmp(src, target, shallow=False):
             report.unchanged.append(patch.path)
-            log.debug("M8: %s already there", patch.path)
+            log.debug("M8: %s already there", shown)
             continue
         if not dry_run:
+            target.parent.mkdir(exist_ok=True)
             shutil.copyfile(src, target)
         report.copied.append(patch.path)
-        log.info("M8: %s %s", "would copy" if dry_run else "copied",
-                 target.name)
+        log.info("M8: %s %s", "would copy" if dry_run else "copied", shown)
     return report

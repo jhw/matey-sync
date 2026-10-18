@@ -27,7 +27,7 @@ def test_cli_end_to_end_logs_to_console(make, tmp_path, monkeypatch, capsys):
     assert rc == 0
     assert "INFO" in out and "searching impbox.net/matey for 'bass'" in out
     assert "[1/1] bob/A=BASS.m8i" in out and "done:" in out and "M8 done" in out
-    assert (card / "Instruments/Packs/matey/bass/A=BASS.m8i").exists()
+    assert (card / "Instruments/Packs/matey/bass/bob/A=BASS.m8i").exists()
     assert (cache / "bass/bob/A=BASS.mp3").exists()
 
 

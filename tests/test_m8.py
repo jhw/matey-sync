@@ -25,10 +25,12 @@ def card(tmp_path):
 def test_copies_patches_not_clips_into_term_folder(synced, card):
     cache, patches = synced
     r = copy_to_m8("bass", patches, cache, m8_root=card)
-    dest = card / "Instruments" / "Packs" / "matey" / "bass"
+    term_dir = card / "Instruments" / "Packs" / "matey" / "bass"
+    dest = term_dir / "a"                      # <term>/<user>/<patch>
     assert sorted(p.name for p in dest.iterdir()) == ["A=BASS.m8i", "B_BASS.m8i"]
+    assert not list(term_dir.glob("*.m8i"))     # nothing loose at term level
     assert (dest / "A=BASS.m8i").read_bytes() == M8
-    assert len(r.copied) == 2 and r.destination == dest
+    assert len(r.copied) == 2 and r.destination == term_dir
 
 
 def test_second_copy_is_a_noop(synced, card):
@@ -41,7 +43,7 @@ def test_second_copy_is_a_noop(synced, card):
 def test_changed_file_is_overwritten(synced, card):
     cache, patches = synced
     copy_to_m8("bass", patches, cache, m8_root=card)
-    (card / "Instruments/Packs/matey/bass/A=BASS.m8i").write_bytes(b"old")
+    (card / "Instruments/Packs/matey/bass/a/A=BASS.m8i").write_bytes(b"old")
     r = copy_to_m8("bass", patches, cache, m8_root=card)
     assert r.copied == ["A=BASS.m8i"]
 
@@ -56,7 +58,7 @@ def test_dry_run_writes_nothing(synced, card):
 def test_no_subdir_still_uses_term_folder(synced, card):
     cache, patches = synced
     copy_to_m8("bass", patches, cache, m8_root=card, subdir="")
-    assert (card / "Instruments/bass/A=BASS.m8i").exists()
+    assert (card / "Instruments/bass/a/A=BASS.m8i").exists()
 
 
 def test_uncached_patches_are_reported(card, tmp_path):
@@ -80,3 +82,20 @@ def test_fat_safe():
     assert fat_safe('a:b*c?d"e<f>g|h') == "a_b_c_d_e_f_g_h"
     assert fat_safe("name. ") == "name"
     assert fat_safe("LD=50%SOLO.m8i") == "LD=50%SOLO.m8i"
+
+
+def test_each_author_gets_a_folder(make, card):
+    client, cache, _ = make([
+        entry("X BASS.m8i", author="ineffable_twaddle"),
+        entry("Y BASS.m8i", author="Dimitri Eugensson"),
+        entry("Z BASS.m8i", author=""),
+        entry("W BASS.m8i", author="../../evil")])
+    r = sync("bass", client, cache)
+    copy_to_m8("bass", r.matched, cache, m8_root=card)
+    base = card / "Instruments/Packs/matey/bass"
+    assert (base / "ineffable_twaddle/X BASS.m8i").exists()
+    assert (base / "Dimitri Eugensson/Y BASS.m8i").exists()
+    assert (base / "_unknown/Z BASS.m8i").exists()
+    # hostile author name stays inside the card's matey folder
+    files = list((card / "Instruments").rglob("W BASS.m8i"))
+    assert len(files) == 1 and base in files[0].parents
